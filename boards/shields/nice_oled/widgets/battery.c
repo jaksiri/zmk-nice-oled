@@ -60,6 +60,7 @@ void animation_smart_battery_off(lv_obj_t *canvas) {
 }
 #endif
 
+#if IS_ENABLED(CONFIG_NICE_EPAPER_ON)
 static void draw_level(lv_obj_t *canvas, const struct status_state *state) {
     lv_draw_label_dsc_t label_right_dsc;
 #if IS_ENABLED(CONFIG_NICE_EPAPER_ON)
@@ -95,16 +96,52 @@ static void draw_charging_level(lv_obj_t *canvas, const struct status_state *sta
     lv_canvas_draw_img(canvas, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_X + 25, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_Y, &bolt, &img_dsc);
 #endif // CONFIG_NICE_EPAPER_ON
 }
+#else // CONFIG_NICE_EPAPER_ON
+
+// OLED: draw a battery-shaped icon (outline + level fill + terminal nub), with
+// the lightning bolt to its left when charging. All geometry hangs off the
+// BATTERY_CUSTOM_X/Y config so the whole icon can be repositioned from the
+// user config. ~32px wide total (10px bolt slot + 20px body + 2px terminal).
+static void draw_battery_icon(lv_obj_t *canvas, const struct status_state *state) {
+    const int bx = CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_X;
+    const int by = CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_Y;
+    const int body_x = bx + 10; // reserve 10px on the left for the charge bolt
+
+    lv_draw_rect_dsc_t fg_dsc; // foreground (white by default)
+    init_rect_dsc(&fg_dsc, LVGL_FOREGROUND);
+    lv_draw_rect_dsc_t bg_dsc; // background (black by default)
+    init_rect_dsc(&bg_dsc, LVGL_BACKGROUND);
+
+    // Body outline: white rect hollowed out by a 1px-inset background rect.
+    lv_canvas_draw_rect(canvas, body_x, by, 20, 13, &fg_dsc);
+    lv_canvas_draw_rect(canvas, body_x + 1, by + 1, 18, 11, &bg_dsc);
+    // Positive terminal nub on the right edge.
+    lv_canvas_draw_rect(canvas, body_x + 20, by + 4, 2, 5, &fg_dsc);
+    // Charge-level fill inside the body (16px usable width at 100%).
+    int fill = (state->battery * 16) / 100;
+    if (fill > 0) {
+        lv_canvas_draw_rect(canvas, body_x + 2, by + 2, fill, 9, &fg_dsc);
+    }
+    // Lightning bolt (8x11) in the reserved left slot while charging.
+    if (state->charging) {
+        lv_draw_img_dsc_t img_dsc;
+        lv_draw_img_dsc_init(&img_dsc);
+        lv_canvas_draw_img(canvas, bx, by + 1, &bolt, &img_dsc);
+    }
+}
+#endif // CONFIG_NICE_EPAPER_ON
 
 void draw_battery_status(lv_obj_t *canvas, const struct status_state *state) {
 #if IS_ENABLED(CONFIG_NICE_EPAPER_ON)
     lv_draw_label_dsc_t label_left_dsc;
     init_label_dsc(&label_left_dsc, LVGL_FOREGROUND, &pixel_operator_mono_16, LV_TEXT_ALIGN_LEFT);
     lv_canvas_draw_text(canvas, 0, 19, 25, &label_left_dsc, "BAT");
-#endif // CONFIG_NICE_EPAPER_ON
     if (state->charging) {
         draw_charging_level(canvas, state);
     } else {
         draw_level(canvas, state);
     }
+#else
+    draw_battery_icon(canvas, state);
+#endif // CONFIG_NICE_EPAPER_ON
 }
