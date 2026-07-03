@@ -17,22 +17,25 @@ void draw_layer_status(lv_obj_t *canvas, const struct status_state *state) {
     lv_canvas_draw_text(canvas, CONFIG_NICE_OLED_WIDGET_LAYER_CUSTOM_X,
                         CONFIG_NICE_OLED_WIDGET_LAYER_CUSTOM_Y, 68, &label_dsc, text);
 #else
-    // OLED: big layer number knocked out of a rounded white badge.
+    // OLED: big layer number knocked out of a full-width rounded white badge.
     const int lx = CONFIG_NICE_OLED_WIDGET_LAYER_CUSTOM_X;
     const int ly = CONFIG_NICE_OLED_WIDGET_LAYER_CUSTOM_Y;
-    const int size = 24; // square badge
+    const int w = 34; // spans the ~32px display width
+    const int h = 30;
 
     sprintf(text, "%i", state->layer_index);
 
     // Rounded white badge background.
     lv_draw_rect_dsc_t badge_dsc;
     init_rect_dsc(&badge_dsc, LVGL_FOREGROUND);
-    badge_dsc.radius = 6;
-    lv_canvas_draw_rect(canvas, lx, ly, size, size, &badge_dsc);
+    badge_dsc.radius = 8;
+    lv_canvas_draw_rect(canvas, lx, ly, w, h, &badge_dsc);
 
-    // Number in the background color, centered inside the badge.
+    // Big number in the background color, centered in the badge. Drawn twice
+    // with a 1px x-offset for a bolder stroke.
     lv_draw_label_dsc_t num_dsc;
-    init_label_dsc(&num_dsc, LVGL_BACKGROUND, &pixel_operator_mono_22, LV_TEXT_ALIGN_CENTER);
-    lv_canvas_draw_text(canvas, lx, ly + 3, size, &num_dsc, text);
+    init_label_dsc(&num_dsc, LVGL_BACKGROUND, &pixel_operator_mono_40, LV_TEXT_ALIGN_CENTER);
+    lv_canvas_draw_text(canvas, lx, ly + 3, w, &num_dsc, text);
+    lv_canvas_draw_text(canvas, lx + 1, ly + 3, w, &num_dsc, text);
 #endif // CONFIG_NICE_EPAPER_ON
 }

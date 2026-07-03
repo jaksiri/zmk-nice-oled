@@ -7,3 +7,4 @@ LV_FONT_DECLARE(pixel_operator_mono_8);
 LV_FONT_DECLARE(pixel_operator_mono_12);
 LV_FONT_DECLARE(pixel_operator_mono_16);
 LV_FONT_DECLARE(pixel_operator_mono_22);
+LV_FONT_DECLARE(pixel_operator_mono_40);
